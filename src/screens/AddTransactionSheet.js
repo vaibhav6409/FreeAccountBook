@@ -43,8 +43,6 @@ useEffect(() => {
     setAmount('');
     setNote('');
     setType('CR');
-    setSelectedDate(new Date().toISOString().slice(0, 10));
-    setCategory(null);
   }
 }, [editData]);
 

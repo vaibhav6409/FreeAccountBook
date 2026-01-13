@@ -6,12 +6,24 @@ import AddAccount from '../screens/AddAccount';
 import LedgerScreen from '../screens/LedgerScreen';
 import AddTransaction from '../screens/AddTransaction';
 import CategoriesScreen from '../screens/CategoriesScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function AccountStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        headerStyle: {
+          backgroundColor: '#3478f6',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
       <Stack.Screen
         name="AccountList"
         component={AccountList}
@@ -37,6 +49,8 @@ export default function AccountStack() {
         component={CategoriesScreen}
         options={{ title: 'Categories' }}
       />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+      {/* <Stack.Screen name="Currency" component={CurrencyScreen} /> */}
     </Stack.Navigator>
   );
 }

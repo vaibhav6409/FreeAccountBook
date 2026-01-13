@@ -6,25 +6,36 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
+  Animated,
 } from 'react-native';
 import { getDB } from '../db/database';
 import AddTransactionSheet from './AddTransactionSheet';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import TransactionActionSheet from '../components/TransactionActionSheet';
+import AppHeader from '../components/AppHeader';
+import AnimatedHeader from '../components/AnimatedHeader';
+import HeaderActionsSheet from '../components/HeaderActionsSheet';
 
 export default function LedgerScreen({ route, navigation }) {
   const { accountId, name } = route.params;
   const [filter, setFilter] = useState('ALL');
   const [txns, setTxns] = useState([]);
   const [showSheet, setShowSheet] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const [actionTxn, setActionTxn] = useState(null);
   const [selectedTxn, setSelectedTxn] = useState(null);
   const [summary, setSummary] = useState({
     income: 0,
     expense: 0,
     balance: 0,
   });
+  const [searchText, setSearchText] = useState('');
+  const scrollY = React.useRef(new Animated.Value(0)).current;
+
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({ title: name });
+    // navigation.setOptions({ title: name });
     loadTxns();
     loadSummary();
   }, [filter]);
@@ -54,7 +65,7 @@ export default function LedgerScreen({ route, navigation }) {
     for (let i = 0; i < res[0].rows.length; i++) {
       rows.push(res[0].rows.item(i));
     }
-    console.log('rows', rows);
+    // console.log('rows', rows);
     setTxns(rows);
   };
 
@@ -84,15 +95,38 @@ export default function LedgerScreen({ route, navigation }) {
     });
   };
 
+  const filteredTxns = txns.filter(
+    t =>
+      t.note?.toLowerCase().includes(searchText.toLowerCase()) ||
+      t.amount.toString().includes(searchText),
+  );
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, justifyContent: 'flex-start' }}>
+      <HeaderActionsSheet
+        isVisible={showActions}
+        onClose={() => setShowActions(false)}
+      />
+      <AnimatedHeader
+        title={name}
+        showBack
+        scrollY={scrollY}
+        onSearch={text => setSearchText(text)}
+        // onMore={() => setShowActions(true)}
+      />
+
       {/* LIST */}
-      <FlatList
-        data={txns}
+      <Animated.FlatList
+        data={filteredTxns}
         keyExtractor={i => i.id.toString()}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false },
+        )}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 160 }}
         ListHeaderComponent={
-          <View>
+          <View style={{ backgroundColor: '#ffffff' }}>
             <View style={styles.filterRow}>
               {['ALL', 'CR', 'DR'].map(f => (
                 <TouchableOpacity
@@ -108,21 +142,20 @@ export default function LedgerScreen({ route, navigation }) {
             </View>
 
             <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 1.8 }]}>Date ↓</Text>
-              <Text style={[styles.th, { flex: 2, }]}>Notes</Text>
-              <Text style={[styles.th, { flex: 1, textAlign: 'right' }]}>
+              <Text style={[styles.th, { flex: 2 }]}>Date ↓</Text>
+              <Text style={[styles.th, { flex: 2 }]}>Notes</Text>
+              <Text style={[styles.th, { flex: 2, textAlign: 'right' }]}>
                 Amount
               </Text>
             </View>
           </View>
         }
-        stickyHeaderIndices={[0]}
         renderItem={({ item }) => (
           <Pressable
             style={styles.txnRow}
             onPress={() => {
-              setSelectedTxn(item);
-              setShowSheet(true);
+              setActionTxn(item);
+              setShowActionSheet(true);
             }}
           >
             {/* ICON */}
@@ -137,9 +170,9 @@ export default function LedgerScreen({ route, navigation }) {
               ]}
             >
               {item.category_icon ? (
-                <Icon name={item.category_icon} size={18} color="#fff" />
+                <Icon name={item.category_icon} size={14} color="#fff" />
               ) : (
-                <Icon name="dots-horizontal" size={20} color="#555" />
+                <Icon name="dots-horizontal" size={16} color="#555" />
               )}
             </View>
 
@@ -156,7 +189,8 @@ export default function LedgerScreen({ route, navigation }) {
               style={[
                 styles.amount,
                 {
-                  flex: 1,
+                  flex: 2,
+                  // backgroundColor:'red',
                   textAlign: 'right',
                   color: item.type === 'CR' ? '#2ecc71' : '#e74c3c',
                 },
@@ -186,6 +220,9 @@ export default function LedgerScreen({ route, navigation }) {
           <Text style={styles.footerValue}>{summary.balance.toFixed(2)}</Text>
         </View>
       </View>
+      {/* <View style={{ height: 20 }}>
+
+      </View> */}
 
       {/* ADD BUTTON */}
       <TouchableOpacity
@@ -212,6 +249,32 @@ export default function LedgerScreen({ route, navigation }) {
         }}
         editData={selectedTxn} // 👈 NEW
       />
+      <TransactionActionSheet
+        isVisible={showActionSheet}
+        transaction={actionTxn}
+        onClose={() => {
+          setShowActionSheet(false);
+          setActionTxn(null);
+        }}
+        onEdit={txn => {
+          setShowActionSheet(false); // ✅ close first
+          setActionTxn(null);
+
+          setSelectedTxn(txn);
+          setShowSheet(true);
+        }}
+        onCopy={txn => {
+          setSelectedTxn({
+            ...txn,
+            id: null, // important
+          });
+          setShowSheet(true);
+        }}
+        onDeleted={() => {
+          loadTxns();
+          loadSummary();
+        }}
+      />
     </View>
   );
 }
@@ -236,7 +299,8 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#3478f6',
+    // backgroundColor: '#3478f6',
+    backgroundColor: '#cecece',
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
@@ -255,12 +319,12 @@ const styles = StyleSheet.create({
   },
 
   iconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 5,
   },
 
   iconText: {
@@ -329,6 +393,7 @@ const styles = StyleSheet.create({
   footerItem: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
 
   footerLabel: {
@@ -340,5 +405,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
+    textAlign: 'right',
   },
 });

@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { initDB, getDB } from './src/db/database';
 import CurrencyScreen from './src/screens/CurrencyScreen';
 import AccountStack from './src/navigation/AccountStack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'react-native';
 
 const RootStack = createNativeStackNavigator();
 
@@ -26,24 +28,26 @@ export default function App() {
   if (!ready) return null;
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {!hasCurrency ? (
-          <RootStack.Screen name="Currency">
-            {(props) => (
-              <CurrencyScreen
-                {...props}
-                onDone={() => setHasCurrency(true)}
-              />
+    <SafeAreaProvider>
+      <StatusBar barStyle="light-content" backgroundColor="#3478f6" />
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            {!hasCurrency ? (
+              <RootStack.Screen name="Currency">
+                {props => (
+                  <CurrencyScreen
+                    {...props}
+                    onDone={() => setHasCurrency(true)}
+                  />
+                )}
+              </RootStack.Screen>
+            ) : (
+              <RootStack.Screen name="AccountStack" component={AccountStack} />
             )}
-          </RootStack.Screen>
-        ) : (
-          <RootStack.Screen
-            name="AccountStack"
-            component={AccountStack}
-          />
-        )}
-      </RootStack.Navigator>
-    </NavigationContainer>
+          </RootStack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </SafeAreaProvider>
   );
 }

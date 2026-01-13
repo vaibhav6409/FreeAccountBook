@@ -54,6 +54,7 @@ export const initDB = async () => {
       category_id INTEGER
     );
   `);
+
   // ---- CATEGORY MIGRATION ----
 try {
   await database.executeSql(
@@ -70,6 +71,14 @@ try {
 } catch (e) {
   // column already exists
 }
+try {
+await db.executeSql(
+  `ALTER TABLE accounts ADD COLUMN is_pinned INTEGER DEFAULT 0`
+);
+} catch (e) {
+  // column already exists
+}
+
 
 await database.executeSql(
   `UPDATE categories 
