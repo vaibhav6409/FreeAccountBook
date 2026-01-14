@@ -17,7 +17,6 @@ import HeaderActionsSheet from '../sheets/HeaderActionsSheet';
 import { useFocusEffect } from '@react-navigation/native';
 import { getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
-import CategoryFilterSheet from '../sheets/CategoryFilterSheet';
 
 export default function LedgerScreen({ route, navigation }) {
   const { accountId, name } = route.params;
@@ -34,49 +33,38 @@ export default function LedgerScreen({ route, navigation }) {
   });
   const [searchText, setSearchText] = useState('');
   const scrollY = React.useRef(new Animated.Value(0)).current;
+
   const [showActions, setShowActions] = useState(false);
   const [currency, setCurrency] = useState({ currency_symbol: '₹' });
-  const [sortBy, setSortBy] = useState('date'); 
-  const [sortOrder, setSortOrder] = useState('DESC'); 
-  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState([]);
 
   useFocusEffect(
     useCallback(() => {
       getCurrency().then(setCurrency);
-      loadTxns();
-    }, [accountId]),
+    }, []),
   );
-
   useEffect(() => {
-    let income = 0;
-    let expense = 0;
-
-    filteredTxns.forEach(t => {
-      if (t.type === 'CR') income += Number(t.amount);
-      if (t.type === 'DR') expense += Number(t.amount);
-    });
-
-    setSummary({
-      income,
-      expense,
-      balance: income - expense,
-    });
-  }, [txns, filter, selectedCategories, searchText]);
+    loadTxns();
+    loadSummary();
+  }, [filter]);
 
   const loadTxns = async () => {
     const db = await getDB();
 
+    let where = '';
+    if (filter === 'CR') where = "AND t.type='CR'";
+    if (filter === 'DR') where = "AND t.type='DR'";
+
     const res = await db.executeSql(
       `
-      SELECT 
-        t.*,
-        c.icon AS category_icon,
-        c.color AS category_color
-      FROM transactions t
-      LEFT JOIN categories c ON c.id = t.category_id
-      WHERE t.account_id=?
-      `,
+    SELECT 
+      t.*,
+      c.icon AS category_icon,
+      c.color AS category_color
+    FROM transactions t
+    LEFT JOIN categories c ON c.id = t.category_id
+    WHERE t.account_id=?
+    ${where}
+    ORDER BY t.date DESC`,
       [accountId],
     );
 
@@ -84,8 +72,6 @@ export default function LedgerScreen({ route, navigation }) {
     for (let i = 0; i < res[0].rows.length; i++) {
       rows.push(res[0].rows.item(i));
     }
-    console.log('rows', rows);
-
     setTxns(rows);
   };
 
@@ -115,93 +101,11 @@ export default function LedgerScreen({ route, navigation }) {
     });
   };
 
-  const filteredTxns = txns
-    .filter(t => {
-      if (filter === 'CR') return t.type === 'CR';
-      if (filter === 'DR') return t.type === 'DR';
-      return true;
-    })
-
-    .filter(t => {
-      if (selectedCategories.length === 0) return true;
-      return selectedCategories.some(c => c.id === t.category_id);
-    })
-
-    .filter(
-      t =>
-        t.note?.toLowerCase().includes(searchText.toLowerCase()) ||
-        t.amount.toString().includes(searchText),
-    )
-
-    .sort((a, b) => {
-      let v1, v2;
-
-      if (sortBy === 'date') {
-        v1 = new Date(a.date);
-        v2 = new Date(b.date);
-      } else if (sortBy === 'amount') {
-        v1 = Number(a.amount);
-        v2 = Number(b.amount);
-      } else {
-        v1 = (a.note || '').toLowerCase();
-        v2 = (b.note || '').toLowerCase();
-      }
-
-      if (v1 < v2) return sortOrder === 'ASC' ? -1 : 1;
-      if (v1 > v2) return sortOrder === 'ASC' ? 1 : -1;
-      return 0;
-    });
-
-  const toggleSort = field => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC');
-    } else {
-      setSortBy(field);
-      setSortOrder('DESC');
-    }
-  };
-  const toggleCategory = (category) => {
-    if (!category) {
-      setSelectedCategories([]);
-      return;
-    }
-    setSelectedCategories(prev => {
-      const exists = prev.find(c => c.id === category.id);
-      if (exists) {
-        return prev.filter(c => c.id !== category.id);
-      }
-      return [...prev, category];
-    });
-  };
-
-  function HeaderSort({ label, value, sortBy, sortOrder, onPress, align }) {
-    const active = sortBy === value;
-
-    return (
-      <TouchableOpacity
-        onPress={() => onPress(value)}
-        style={{
-          flex: 2,
-          flexDirection: 'row',
-          alignItems: 'center',
-          alignContent: 'center',
-          justifyContent: align === 'right' ? 'flex-end' : 'flex-start',
-        }}
-      >
-        <Text style={[styles.th, active && { fontWeight: '800' }]}>
-          {label}
-        </Text>
-        {active && (
-          <Icon
-            name={sortOrder === 'ASC' ? 'arrow-up' : 'arrow-down'}
-            size={14}
-            color={COLORS.primary}
-            style={{ marginLeft: 4 }}
-          />
-        )}
-      </TouchableOpacity>
-    );
-  }
+  const filteredTxns = txns.filter(
+    t =>
+      t.note?.toLowerCase().includes(searchText.toLowerCase()) ||
+      t.amount.toString().includes(searchText),
+  );
 
   return (
     <View
@@ -216,7 +120,7 @@ export default function LedgerScreen({ route, navigation }) {
         showBack
         scrollY={scrollY}
         onSearch={text => setSearchText(text)}
-        onMore={() => setShowCategoryFilter(true)}
+        // onMore={() => setShowActions(true)}
       />
       <View style={{ backgroundColor: '#ffffff' }}>
         <View style={styles.filterRow}>
@@ -237,73 +141,13 @@ export default function LedgerScreen({ route, navigation }) {
             </TouchableOpacity>
           ))}
         </View>
-        {selectedCategories.length > 0 && (
-          <View style={styles.chipWrap}>
-            {selectedCategories.map(cat => (
-              <View
-                key={cat.id}
-                style={[
-                  styles.categoryChip,
-                  { backgroundColor: cat.color + '22' },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.categoryIcon,
-                    { backgroundColor: cat.color },
-                  ]}
-                >
-                  <Icon name={cat.icon} size={14} color="#fff" />
-                </View>
-
-                <Text style={styles.categoryText}>{cat.name}</Text>
-
-                <TouchableOpacity
-                  onPress={() =>
-                    setSelectedCategories(prev =>
-                      prev.filter(c => c.id !== cat.id)
-                    )
-                  }
-                >
-                  <Icon name="close" size={14} color={COLORS.primary} />
-                </TouchableOpacity>
-              </View>
-            ))}
-
-            {/* CLEAR ALL */}
-            <TouchableOpacity
-              style={styles.clearAll}
-              onPress={() => setSelectedCategories([])}
-            >
-              <Text style={styles.clearAllText}>Clear</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
 
         <View style={styles.tableHeader}>
-          <HeaderSort
-            label="Date"
-            value="date"
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onPress={v => toggleSort(v)}
-          />
-          <HeaderSort
-            label="Notes"
-            value="note"
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onPress={v => toggleSort(v)}
-          />
-          <HeaderSort
-            label="Amount"
-            value="amount"
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onPress={v => toggleSort(v)}
-            align="right"
-          />
+          <Text style={[styles.th, { flex: 2 }]}>Date ↓</Text>
+          <Text style={[styles.th, { flex: 2 }]}>Notes</Text>
+          <Text style={[styles.th, { flex: 2, textAlign: 'right' }]}>
+            Amount
+          </Text>
         </View>
       </View>
       <Animated.FlatList
@@ -372,17 +216,23 @@ export default function LedgerScreen({ route, navigation }) {
       <View style={styles.footer}>
         <View style={styles.footerItem}>
           <Text style={styles.footerLabel}>Income</Text>
-          <Text style={styles.footerValue}>{summary.income.toFixed(2)}</Text>
+          <Text style={styles.footerValue}>
+            {summary.income.toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.footerItem}>
           <Text style={styles.footerLabel}>Expense</Text>
-          <Text style={styles.footerValue}>{summary.expense.toFixed(2)}</Text>
+          <Text style={styles.footerValue}>
+            {summary.expense.toFixed(2)}
+          </Text>
         </View>
 
         <View style={styles.footerItem}>
           <Text style={styles.footerLabel}>Balance</Text>
-          <Text style={styles.footerValue}>{summary.balance.toFixed(2)}</Text>
+          <Text style={styles.footerValue}>
+            {summary.balance.toFixed(2)}
+          </Text>
         </View>
       </View>
 
@@ -435,12 +285,6 @@ export default function LedgerScreen({ route, navigation }) {
           loadTxns();
           loadSummary();
         }}
-      />
-      <CategoryFilterSheet
-        isVisible={showCategoryFilter}
-        selectedCategories={selectedCategories}
-        onSelectCategory={toggleCategory}
-        onClose={() => setShowCategoryFilter(false)}
       />
     </View>
   );
@@ -584,67 +428,6 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 18,
     fontWeight: '700',
-    textAlign: 'right',
+    textAlign:'right'
   },
-  activeChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primarySoft,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginLeft: 12,
-    marginBottom: 6,
-  },
-
-  activeChipText: {
-    color: COLORS.primary,
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  chipWrap: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  marginHorizontal: 12,
-  marginBottom: 6,
-  alignItems: 'center',
-},
-
-categoryChip: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 8,
-  paddingVertical: 6,
-  borderRadius: 18,
-  marginRight: 6,
-  marginBottom: 6,
-},
-
-categoryIcon: {
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginRight: 6,
-},
-
-categoryText: {
-  fontSize: 12,
-  fontWeight: '600',
-  marginRight: 4,
-  color: COLORS.textPrimary,
-},
-
-clearAll: {
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-  borderRadius: 14,
-  backgroundColor: COLORS.primarySoft,
-},
-
-clearAllText: {
-  color: COLORS.primary,
-  fontWeight: '600',
-  fontSize: 12,
-},
 });

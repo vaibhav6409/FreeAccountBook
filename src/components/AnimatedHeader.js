@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS } from '../theme/colors';
 
 const HEADER_MAX_HEIGHT = 100;
 const HEADER_MIN_HEIGHT = 56;
@@ -25,82 +26,85 @@ export default function AnimatedHeader({
   const [searchMode, setSearchMode] = useState(false);
   const [query, setQuery] = useState('');
 
-  const headerHeight = scrollY.interpolate({
+  const headerHeight = scrollY?.interpolate({
     inputRange: [0, 60],
     outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
     extrapolate: 'clamp',
   });
 
-  const titleOpacity = scrollY.interpolate({
-    inputRange: [0, 40],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
   return (
-    <Animated.View style={[styles.container, { height: headerHeight }]}>
-      {/* TOP BAR */}
+    <Animated.View
+      style={[
+        styles.container,
+        // scrollY && { height: headerHeight },
+      ]}
+    >
       <View style={styles.topRow}>
         {showBack && (
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-left" size={30} color="#3478f6" />
+            <Icon name="chevron-left" size={30} color={COLORS.primary} />
           </TouchableOpacity>
         )}
 
-        <View style={{ flex: 1 }} />
+        <View style={styles.center}>
+          <Text numberOfLines={1} style={styles.title}>
+            {title}
+          </Text>
+        </View>
 
         {!searchMode && (
-          <>
-            <TouchableOpacity onPress={() => setSearchMode(true)}>
-              <Icon name="magnify" size={22} color="#3478f6" />
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={onMore} style={{ marginLeft: 14 }}>
-              <Icon name="dots-horizontal" size={22} color="#3478f6" />
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity onPress={() => setSearchMode(true)}>
+            <Icon name="magnify" size={22} color={COLORS.primary} />
+          </TouchableOpacity>
         )}
+
+        {onMore && (
+          <TouchableOpacity onPress={onMore} style={{ marginLeft: 14 }}>
+              <Icon name="filter-variant" size={22} color={COLORS.primary} />
+          </TouchableOpacity>
+          )}
       </View>
 
-      {/* TITLE / SEARCH */}
-      <Animated.View style={{ opacity: titleOpacity }}>
-        {!searchMode ? (
-          <Text style={styles.title}>{title}</Text>
-        ) : (
-          <View style={styles.searchBox}>
-            <Icon name="magnify" size={18} color="#888" />
-            <TextInput
-              autoFocus
-              placeholder="Search..."
-              value={query}
-              onChangeText={(t) => {
-                setQuery(t);
-                onSearch?.(t);
-              }}
-              style={styles.input}
-            />
-            <TouchableOpacity
-              onPress={() => {
-                setQuery('');
-                setSearchMode(false);
-                onSearch?.('');
-              }}
-            >
-              <Text style={styles.cancel}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </Animated.View>
+      {searchMode && (
+        <View style={styles.searchBox}>
+          <Icon name="magnify" size={18} color={COLORS.iconMuted} />
+
+          <TextInput
+            autoFocus
+            placeholder="Search..."
+            placeholderTextColor={COLORS.textSecondary}
+            value={query}
+            onChangeText={t => {
+              setQuery(t);
+              onSearch?.(t);
+            }}
+            maxLength={20}
+            style={styles.input}
+          />
+
+          <TouchableOpacity
+            onPress={() => {
+              setQuery('');
+              setSearchMode(false);
+              onSearch?.('');
+            }}
+          >
+            <Text style={styles.cancel}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </Animated.View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'ios' ? 40 : 10,
+    backgroundColor: COLORS.headerBg,
+    paddingTop: Platform.OS === 'ios' ? 44 : 12,
+    paddingBottom: 5,
     paddingHorizontal: 14,
     elevation: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
 
   topRow: {
@@ -108,29 +112,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  center: {
+    flex: 1,
+    marginLeft: 8,
+  },
+
   title: {
-    fontSize: 34,
-    fontWeight: '800',
-    marginTop: 10,
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
 
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f1f1',
-    borderRadius: 10,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
     paddingHorizontal: 10,
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
 
   input: {
     flex: 1,
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     fontSize: 16,
+    color: COLORS.textPrimary,
   },
 
   cancel: {
-    color: '#3478f6',
+    color: COLORS.primary,
     fontWeight: '600',
+    paddingLeft: 6,
   },
 });

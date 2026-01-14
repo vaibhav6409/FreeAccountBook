@@ -8,70 +8,72 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS } from '../theme/colors';
 
 export default function AppHeader({
   title,
   showBack = false,
-  rightIcons = [], // [{ name, onPress }]
+  rightIcons = [],
 }) {
   const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
-      {/* LEFT */}
       <View style={styles.left}>
         {showBack && (
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="chevron-left" size={30} color="#3478f6" />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.iconBtn}
+          >
+            <Icon name="chevron-left" size={28} color={COLORS.primary} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* TITLE */}
       <View style={styles.center}>
         <Text numberOfLines={1} style={styles.title}>
           {title}
         </Text>
       </View>
 
-      {/* RIGHT */}
       <View style={styles.right}>
         {rightIcons.map((icon, index) => (
           <TouchableOpacity
             key={index}
             onPress={icon.onPress}
-            style={{ marginLeft: 14 }}
+            style={styles.iconBtn}
           >
-            <Icon name={icon.name} size={22} color="#3478f6" />
+            <Icon name={icon.name} size={22} color={COLORS.primary} />
           </TouchableOpacity>
         ))}
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    backgroundColor: '#fff',
-    elevation: 4,
+    paddingTop: Platform.OS === 'ios' ? 44 : 14,
+    paddingBottom: 14,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
 
   left: {
-    width: 40,
+    width: 44,
     alignItems: 'flex-start',
   },
 
   center: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
 
   right: {
-    width: 80,
+    minWidth: 44,
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
@@ -79,6 +81,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000',
+    color: COLORS.text,
+  },
+
+  iconBtn: {
+    padding: 6,
+    marginLeft: 8,
+    borderRadius: 20,
   },
 });

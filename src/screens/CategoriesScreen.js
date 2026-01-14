@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getDB } from '../db/database';
-import CategorySheet from './CategorySheet';
+import CategorySheet from '../sheets/CategorySheet';
+import AppHeader from '../components/AppHeader';
+import { COLORS } from '../theme/colors';
 
 export default function CategoriesScreen() {
   const [categories, setCategories] = useState([]);
@@ -30,7 +32,7 @@ export default function CategoriesScreen() {
     setCategories(rows);
   };
 
-  const remove = async (id) => {
+  const remove = async id => {
     Alert.alert('Delete category?', 'This category will be removed', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -47,26 +49,20 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
+      <AppHeader title="Categories" showBack />
       <FlatList
         data={categories}
-        keyExtractor={(i) => i.id.toString()}
+        keyExtractor={i => i.id.toString()}
         contentContainerStyle={{ padding: 16 }}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            {/* LEFT */}
             <View style={styles.left}>
-              <View
-                style={[
-                  styles.iconWrap,
-                  { backgroundColor: item.color },
-                ]}
-              >
-                <Icon name={item.icon} size={18} color="#fff" />
+              <View style={[styles.iconWrap, { backgroundColor: item.color }]}>
+                <Icon name={item.icon} size={18} color={COLORS.icon} />
               </View>
               <Text style={styles.name}>{item.name}</Text>
             </View>
 
-            {/* RIGHT ACTIONS */}
             <View style={styles.actions}>
               <TouchableOpacity
                 style={styles.actionBtn}
@@ -75,24 +71,21 @@ export default function CategoriesScreen() {
                   setShowSheet(true);
                 }}
               >
-                <Icon name="pencil-outline" size={20} color="#3478f6" />
+                <Icon name="pencil-outline" size={20} color={COLORS.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.actionBtn}
                 onPress={() => remove(item.id)}
               >
-                <Icon name="delete-outline" size={20} color="#e74c3c" />
+                <Icon name="delete-outline" size={20} color={COLORS.danger} />
               </TouchableOpacity>
             </View>
           </View>
         )}
-        ListEmptyComponent={
-          <Text style={styles.empty}>No categories yet</Text>
-        }
+        ListEmptyComponent={<Text style={styles.empty}>No categories yet</Text>}
       />
 
-      {/* ADD FAB */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
@@ -103,7 +96,6 @@ export default function CategoriesScreen() {
         <Text style={styles.fabText}>＋</Text>
       </TouchableOpacity>
 
-      {/* BOTTOM SHEET */}
       <CategorySheet
         isVisible={showSheet}
         editData={editCat}
@@ -119,11 +111,11 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f6fb',
+    backgroundColor: COLORS.background,
   },
 
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
@@ -151,6 +143,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '500',
+    color: COLORS.text,
   },
 
   actions: {
@@ -166,7 +159,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 20,
-    backgroundColor: '#3478f6',
+    backgroundColor: COLORS.primary,
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -176,13 +169,13 @@ const styles = StyleSheet.create({
   },
 
   fabText: {
-    color: '#fff',
+    color: COLORS.icon,
     fontSize: 32,
   },
 
   empty: {
     textAlign: 'center',
     marginTop: 40,
-    color: '#999',
+    color: COLORS.muted,
   },
 });

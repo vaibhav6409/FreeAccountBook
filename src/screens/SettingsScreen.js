@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,19 +8,29 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AppHeader from '../components/AppHeader';
+import { useFocusEffect } from '@react-navigation/native';
+import { getCurrency } from '../utils/settings';
+import { COLORS } from '../theme/colors';
 
 export default function SettingsScreen({ navigation }) {
+  const [currency, setCurrency] = useState('INR');
+
+  useFocusEffect(
+    useCallback(() => {
+      getCurrency().then(c => setCurrency(c.currency_code));
+    }, []),
+  );
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#f4f6fb' }}>
-      <AppHeader title="Settings" />
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <AppHeader title="Settings" showBack />
 
       <ScrollView contentContainerStyle={styles.container}>
-        {/* SETTINGS CARD */}
         <View style={styles.card}>
           <SettingItem
             icon="currency-inr"
             title="Change Currency"
-            value="INR"
+            value={currency}
             onPress={() => navigation.navigate('Currency')}
           />
 
@@ -37,20 +47,19 @@ export default function SettingsScreen({ navigation }) {
   );
 }
 
-/* ---------- ROW COMPONENT ---------- */
 function SettingItem({ icon, title, value, onPress }) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress}>
       <View style={styles.left}>
         <View style={styles.iconWrap}>
-          <Icon name={icon} size={20} color="#3478f6" />
+          <Icon name={icon} size={20} color={COLORS.primary} />
         </View>
         <Text style={styles.title}>{title}</Text>
       </View>
 
       <View style={styles.right}>
         {value && <Text style={styles.value}>{value}</Text>}
-        <Icon name="chevron-right" size={22} color="#999" />
+        <Icon name="chevron-right" size={22} color={COLORS.muted} />
       </View>
     </TouchableOpacity>
   );
@@ -58,16 +67,16 @@ function SettingItem({ icon, title, value, onPress }) {
 
 const Divider = () => <View style={styles.divider} />;
 
-/* ---------- STYLES ---------- */
 const styles = StyleSheet.create({
   container: {
     padding: 16,
   },
 
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.surface,
     borderRadius: 14,
     paddingVertical: 6,
+    elevation: 2,
   },
 
   row: {
@@ -87,7 +96,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#eaf1ff',
+    backgroundColor: COLORS.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -96,6 +105,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 15,
     fontWeight: '500',
+    color: COLORS.text,
   },
 
   right: {
@@ -104,14 +114,14 @@ const styles = StyleSheet.create({
   },
 
   value: {
-    color: '#3478f6',
+    color: COLORS.primary,
     marginRight: 6,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 
   divider: {
     height: 1,
-    backgroundColor: '#eee',
+    backgroundColor: COLORS.border,
     marginLeft: 64,
   },
 });

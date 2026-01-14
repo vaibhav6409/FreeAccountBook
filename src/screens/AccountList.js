@@ -11,12 +11,11 @@ import {
 } from 'react-native';
 import { getDB } from '../db/database';
 import { useFocusEffect } from '@react-navigation/native';
-import AccountOptionsSheet from './AccountOptionsSheet';
-import AddAccountSheet from './AddAccountSheet';
-import AppHeader from '../components/AppHeader';
-import AnimatedHeader from '../components/AnimatedHeader';
+import AccountOptionsSheet from '../sheets/AccountOptionsSheet';
+import AddAccountSheet from '../sheets/AddAccountSheet';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-// import Animated, { FadeInDown } from 'react-native-reanimated';
+import { getCurrency } from '../utils/settings';
+import { COLORS } from '../theme/colors';
 const HEADER_MAX_HEIGHT = 60;
 const HEADER_MIN_HEIGHT = 60;
 
@@ -29,6 +28,7 @@ export default function AccountList({ navigation }) {
   const [searchText, setSearchText] = useState('');
   const [searchMode, setSearchMode] = useState(false);
   const [query, setQuery] = useState('');
+  const [currency, setCurrency] = useState({ currency_symbol: '₹' });
 
   const headerHeight = scrollY.interpolate({
     inputRange: [0, 40],
@@ -42,12 +42,9 @@ export default function AccountList({ navigation }) {
     extrapolate: 'clamp',
   });
 
-  // useEffect(() => {
-  //   loadAccounts();
-  // }, [navigation]);
-
   useFocusEffect(
     useCallback(() => {
+      getCurrency().then(setCurrency);
       loadAccounts();
     }, []),
   );
@@ -79,8 +76,8 @@ export default function AccountList({ navigation }) {
     const balance = item.income - item.expense;
 
     return (
-      // <Animated.View entering={FadeInDown.delay(index * 50)}></Animated.View>
       <TouchableOpacity
+        activeOpacity={0.85}
         style={styles.card}
         onPress={() =>
           navigation.navigate('Ledger', {
@@ -89,37 +86,46 @@ export default function AccountList({ navigation }) {
           })
         }
       >
-        {/* HEADER */}
         <View style={styles.cardHeader}>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.titleRow}>
             {item.is_pinned === 1 && (
-              <Text style={{ marginRight: 6 }}>📌</Text>
+              <View style={styles.pinBadge}>
+                <Icon name="pin" size={12} color="#fff" />
+              </View>
             )}
-            <Text style={styles.title}>{item.name}</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.name}
+            </Text>
           </View>
 
           <TouchableOpacity
-            style={{ padding: 5 }}
             onPress={() => {
               setSelectedAccount(item);
               setShowOptions(true);
             }}
           >
-            <Text style={{ fontSize: 22 }}>⋮</Text>
+            <Icon name="dots-vertical" size={22} color={COLORS.textSecondary} />
           </TouchableOpacity>
         </View>
-
-        {/* BODY */}
-        <View style={styles.row}>
-          <View>
-            <Text style={styles.balance}>₹ {balance.toFixed(2)}</Text>
-            <Text style={styles.label}>Balance</Text>
+        <View style={styles.balanceRow}>
+          <Text style={styles.balanceLabel}>Balance</Text>
+          <Text style={styles.balance}>
+            {currency.currency_symbol} {balance.toFixed(2)}
+          </Text>
+        </View>
+        <View style={styles.footerRow}>
+          <View style={styles.stat}>
+            <Icon name="arrow-down-left" size={16} color={COLORS.income} />
+            <Text style={styles.income}>
+              {currency.currency_symbol} {item.income}
+            </Text>
           </View>
 
-          <View>
-            <Text style={styles.income}>₹ {item.income}</Text>
-            <Text style={styles.expense}>₹ {item.expense}</Text>
+          <View style={styles.stat}>
+            <Icon name="arrow-up-right" size={16} color={COLORS.expense} />
+            <Text style={styles.expense}>
+              {currency.currency_symbol} {item.expense}
+            </Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -127,45 +133,60 @@ export default function AccountList({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'flex-start', backgroundColor: '#f5f5f5' }}>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'flex-start',
+        backgroundColor: COLORS.surface,
+      }}
+    >
       <Animated.View style={[styles.container, { height: headerHeight }]}>
         {!searchMode && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-          <Text style={styles.topTitle}>Accounts</Text>
-          <View style={{ flex: 1, flexDirection: 'column' }} /> 
-          {!searchMode && (
-          <TouchableOpacity onPress={() => setSearchMode(true)}>
-            <Icon name="magnify" size={22} color="#3478f6" />
-          </TouchableOpacity>)}
-          <TouchableOpacity onPress={() => {navigation.navigate('Settings') }} style={{ marginLeft: 14 }}>
-            <Icon name="cog-outline" size={22} color="#3478f6" />
-          </TouchableOpacity>
-        </View>)}
-        {searchMode&&(
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            <Text style={styles.topTitle}>Accounts</Text>
+            <View style={{ flex: 1, flexDirection: 'column' }} />
+            {!searchMode && (
+              <TouchableOpacity onPress={() => setSearchMode(true)}>
+                <Icon name="magnify" size={22} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('Settings');
+              }}
+              style={{ marginLeft: 14 }}
+            >
+              <Icon name="cog-outline" size={22} color={COLORS.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
+        {searchMode && (
           <Animated.View style={{ opacity: titleOpacity }}>
-        <View style={styles.searchBox}>
-          <Icon name="magnify" size={18} color="#888" />
-          <TextInput
-            autoFocus
-            placeholder="Search..."
-            value={query}
-            onChangeText={t => {
-              setQuery(t);
-              setSearchText(t);
-            }}
-            style={styles.input}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              setQuery('');
-              setSearchMode(false);
-              setSearchText('');
-            }}
-          >
-            <Text style={styles.cancel}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-         </Animated.View>)}
+            <View style={styles.searchBox}>
+              <Icon name="magnify" size={18} color="#888" />
+              <TextInput
+                autoFocus
+                placeholder="Search..."
+                value={query}
+                onChangeText={t => {
+                  setQuery(t);
+                  setSearchText(t);
+                }}
+                maxLength={20}
+                style={styles.input}
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  setQuery('');
+                  setSearchMode(false);
+                  setSearchText('');
+                }}
+              >
+                <Text style={styles.cancel}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        )}
       </Animated.View>
 
       <Animated.FlatList
@@ -187,9 +208,6 @@ export default function AccountList({ navigation }) {
           </Animated.Text>
         }
       />
-
-      {/* Floating Add Button */}
-      {/* <Animated.View entering={FadeInDown.delay(300)}></Animated.View> */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
@@ -224,24 +242,19 @@ export default function AccountList({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 3,
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  title: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  balance: { color: 'green', fontSize: 22, fontWeight: '700' },
-  label: { color: '#777' },
-  income: { color: 'green', fontSize: 16 },
-  expense: { color: 'red', fontSize: 16 },
+  label: {
+    color: COLORS.textSecondary,
+  },
+
   fab: {
     position: 'absolute',
     right: 20,
     bottom: 20,
-    backgroundColor: '#3478f6',
+    backgroundColor: COLORS.primary,
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -249,33 +262,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5,
   },
-  fabText: { color: '#fff', fontSize: 32 },
+
+  fabText: {
+    color: '#fff',
+    fontSize: 32,
+  },
   container: {
-    backgroundColor: '#fff',
-    // paddingTop: Platform.OS === 'ios' ? 40 : 10,
-    justifyContent:'flex-start',
+    backgroundColor: COLORS.headerBg,
+    justifyContent: 'flex-start',
     paddingHorizontal: 14,
     elevation: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
+
   topTitle: {
     fontSize: 34,
     fontWeight: '800',
     marginTop: 10,
   },
-
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1f1f1',
+    backgroundColor: COLORS.surface,
     borderRadius: 10,
     paddingHorizontal: 10,
     marginTop: 10,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  cancel: {
+    color: COLORS.primary,
+    fontWeight: '600',
   },
 
   input: {
@@ -284,8 +304,87 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  cancel: {
-    color: '#3478f6',
+  card: {
+    backgroundColor: COLORS.background,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  pinBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+
+  title: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    flexShrink: 1,
+  },
+
+  balanceRow: {
+    marginTop: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  balanceLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+
+  balance: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginTop: 2,
+  },
+
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+
+  stat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  income: {
+    marginLeft: 6,
+    color: COLORS.income,
+    fontWeight: '600',
+  },
+
+  expense: {
+    marginLeft: 6,
+    color: COLORS.expense,
     fontWeight: '600',
   },
 });
