@@ -11,14 +11,21 @@ import AppHeader from '../components/AppHeader';
 import { useFocusEffect } from '@react-navigation/native';
 import { getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
+import { getAppSettings } from '../utils/settings';
 
 export default function SettingsScreen({ navigation }) {
   const [currency, setCurrency] = useState('INR');
+  const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
+  const [amountLabels, setAmountLabels] = useState('IE');
 
   useFocusEffect(
     useCallback(() => {
-      getCurrency().then(c => setCurrency(c.currency_code));
-    }, []),
+      getAppSettings().then(s => {
+        setCurrency(s.currency_code);
+        setDateFormat(s.date_format);
+        setAmountLabels(s.amount_labels);
+      });
+    }, [])
   );
 
   return (
@@ -35,6 +42,26 @@ export default function SettingsScreen({ navigation }) {
           />
 
           <Divider />
+          <SettingItem
+            icon="calendar"
+            title="Date Format"
+            value={dateFormat}
+            onPress={() => navigation.navigate('DateFormat')}
+          />
+
+          <Divider />
+
+          <SettingItem
+            icon="swap-vertical"
+            title="Amount Labels"
+            value={amountLabels === 'IE'
+              ? 'Income / Expense'
+              : 'Credit / Debit'}
+            onPress={() => navigation.navigate('AmountLabels')}
+          />
+
+          <Divider />
+
 
           <SettingItem
             icon="shape-outline"

@@ -35,7 +35,7 @@ export default function TransactionActionSheet({
   };
 
   return (
-    <Modal isVisible={isVisible} onBackdropPress={onClose} style={styles.modal}>
+    <Modal isVisible={isVisible} onBackdropPress={onClose} onBackButtonPress={onClose} style={styles.modal}>
       <View style={styles.container}>
         <View style={styles.handle} />
 

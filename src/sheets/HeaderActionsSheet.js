@@ -4,7 +4,7 @@ import Modal from 'react-native-modal';
 
 export default function HeaderActionsSheet({ isVisible, onClose }) {
   return (
-    <Modal isVisible={isVisible} onBackdropPress={onClose} style={styles.modal}>
+    <Modal isVisible={isVisible} onBackdropPress={onClose} onBackButtonPress={onClose} style={styles.modal}>
       <View style={styles.sheet}>
         <TouchableOpacity style={styles.row}>
           <Text>🔽 Sort</Text>

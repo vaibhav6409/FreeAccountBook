@@ -44,7 +44,7 @@ export default function AddAccountSheet({
   };
 
   return (
-    <Modal isVisible={isVisible} onBackdropPress={onClose} style={styles.modal}>
+    <Modal isVisible={isVisible} onBackdropPress={onClose} onBackButtonPress={onClose} style={styles.modal}>
       <View style={styles.sheet}>
         <View style={styles.header}>
           <Text style={styles.title}>

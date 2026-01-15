@@ -53,7 +53,7 @@ export default function CategoriesScreen() {
       <FlatList
         data={categories}
         keyExtractor={i => i.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 90 }}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.left}>

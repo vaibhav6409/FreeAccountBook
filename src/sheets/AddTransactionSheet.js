@@ -21,6 +21,7 @@ export default function AddTransactionSheet({
   accountId,
   onSaved,
   editData = null,
+  settings
 }) {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
@@ -69,13 +70,18 @@ export default function AddTransactionSheet({
         [accountId, amount, txType, selectedDate, note, category?.id || null],
       );
     }
+      setAmount('');
+      setNote('');
+      setType('CR');
+      setCategory(null);
+      setSelectedDate(new Date().toISOString().slice(0, 10));
 
     onSaved();
     onClose();
   };
 
   return (
-    <Modal isVisible={isVisible} onBackdropPress={onClose} style={styles.modal}>
+    <Modal isVisible={isVisible} onBackdropPress={onClose} onBackButtonPress={onClose} style={styles.modal}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>
@@ -133,14 +139,14 @@ export default function AddTransactionSheet({
             style={[styles.actionBtn, styles.income]}
             onPress={() => saveTransaction('CR')}
           >
-            <Text style={styles.actionText}>Income</Text>
+            <Text style={styles.actionText}>{settings.amount_labels === 'CD' ? 'Credit' : 'Income'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.actionBtn, styles.expense]}
             onPress={() => saveTransaction('DR')}
           >
-            <Text style={styles.actionText}>Expense</Text>
+            <Text style={styles.actionText}>{settings.amount_labels === 'CD' ? 'Debit' : 'Expense'}</Text>
           </TouchableOpacity>
         </View>
       </View>

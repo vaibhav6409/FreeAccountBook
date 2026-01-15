@@ -161,7 +161,7 @@ export default function AccountList({ navigation }) {
           </View>
         )}
         {searchMode && (
-          <Animated.View style={{ opacity: titleOpacity }}>
+          <Animated.View style={{  }}>
             <View style={styles.searchBox}>
               <Icon name="magnify" size={18} color="#888" />
               <TextInput
@@ -198,7 +198,8 @@ export default function AccountList({ navigation }) {
         scrollEventThrottle={16}
         keyExtractor={i => i.id.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Animated.Text
             // entering={FadeInDown}

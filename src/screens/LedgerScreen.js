@@ -15,9 +15,10 @@ import TransactionActionSheet from '../sheets/TransactionActionSheet';
 import AnimatedHeader from '../components/AnimatedHeader';
 import HeaderActionsSheet from '../sheets/HeaderActionsSheet';
 import { useFocusEffect } from '@react-navigation/native';
-import { getCurrency } from '../utils/settings';
+import { getAppSettings, getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
 import CategoryFilterSheet from '../sheets/CategoryFilterSheet';
+import dayjs from 'dayjs';
 
 export default function LedgerScreen({ route, navigation }) {
   const { accountId, name } = route.params;
@@ -32,6 +33,10 @@ export default function LedgerScreen({ route, navigation }) {
     expense: 0,
     balance: 0,
   });
+  const [settings, setSettings] = useState({
+    date_format: 'DD/MM/YYYY',
+    amount_labels: 'IE',
+  });
   const [searchText, setSearchText] = useState('');
   const scrollY = React.useRef(new Animated.Value(0)).current;
   const [showActions, setShowActions] = useState(false);
@@ -44,6 +49,7 @@ export default function LedgerScreen({ route, navigation }) {
   useFocusEffect(
     useCallback(() => {
       getCurrency().then(setCurrency);
+      getAppSettings().then(setSettings);
       loadTxns();
     }, [accountId]),
   );
@@ -203,6 +209,13 @@ export default function LedgerScreen({ route, navigation }) {
     );
   }
 
+  function getAmountLabel(type, mode) {
+    if (mode === 'CD') {
+      return type === 'CR' ? 'Credit' : 'Debit';
+    }
+    return type === 'CR' ? 'Income' : 'Expense';
+  }
+
   return (
     <View
       style={{ flex: 1, justifyContent: 'flex-start', backgroundColor: '#fff' }}
@@ -220,22 +233,27 @@ export default function LedgerScreen({ route, navigation }) {
       />
       <View style={{ backgroundColor: '#ffffff' }}>
         <View style={styles.filterRow}>
-          {['ALL', 'CR', 'DR'].map(f => (
-            <TouchableOpacity
-              key={f}
-              onPress={() => setFilter(f)}
-              style={[styles.filterBtn, filter === f && styles.active]}
-            >
-              <Text
-                style={[
-                  styles.filterBtnText,
-                  filter === f && styles.activeText,
-                ]}
+          {['ALL', 'CR', 'DR'].map(f => {
+            const label =
+              f === 'ALL' ? 'All' : getAmountLabel(f, settings.amount_labels);
+
+            return (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setFilter(f)}
+                style={[styles.filterBtn, filter === f && styles.active]}
               >
-                {f === 'ALL' ? 'All' : f === 'CR' ? 'Income' : 'Expense'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.filterBtnText,
+                    filter === f && styles.activeText,
+                  ]}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
         {selectedCategories.length > 0 && (
           <View style={styles.chipWrap}>
@@ -248,10 +266,7 @@ export default function LedgerScreen({ route, navigation }) {
                 ]}
               >
                 <View
-                  style={[
-                    styles.categoryIcon,
-                    { backgroundColor: cat.color },
-                  ]}
+                  style={[styles.categoryIcon, { backgroundColor: cat.color }]}
                 >
                   <Icon name={cat.icon} size={14} color="#fff" />
                 </View>
@@ -261,7 +276,7 @@ export default function LedgerScreen({ route, navigation }) {
                 <TouchableOpacity
                   onPress={() =>
                     setSelectedCategories(prev =>
-                      prev.filter(c => c.id !== cat.id)
+                      prev.filter(c => c.id !== cat.id),
                     )
                   }
                 >
@@ -279,7 +294,6 @@ export default function LedgerScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
         )}
-
 
         <View style={styles.tableHeader}>
           <HeaderSort
@@ -347,7 +361,9 @@ export default function LedgerScreen({ route, navigation }) {
                 />
               )}
             </View>
-            <Text style={[styles.date, { flex: 1.2 }]}>{item.date}</Text>
+            <Text style={[styles.date, { flex: 1.2 }]}>
+              {dayjs(item.date).format(settings.date_format)}
+            </Text>
             <Text style={[styles.note, { flex: 2 }]} numberOfLines={3}>
               {item.note || ''}
             </Text>
@@ -371,12 +387,12 @@ export default function LedgerScreen({ route, navigation }) {
       />
       <View style={styles.footer}>
         <View style={styles.footerItem}>
-          <Text style={styles.footerLabel}>Income</Text>
+          <Text style={styles.footerLabel}>{settings.amount_labels === 'CD' ? 'Credit' : 'Income'}</Text>
           <Text style={styles.footerValue}>{summary.income.toFixed(2)}</Text>
         </View>
 
         <View style={styles.footerItem}>
-          <Text style={styles.footerLabel}>Expense</Text>
+          <Text style={styles.footerLabel}>{settings.amount_labels === 'CD' ? 'Debit' : 'Expense'}</Text>
           <Text style={styles.footerValue}>{summary.expense.toFixed(2)}</Text>
         </View>
 
@@ -409,6 +425,7 @@ export default function LedgerScreen({ route, navigation }) {
           loadSummary();
         }}
         editData={selectedTxn}
+        settings={settings}
       />
       <TransactionActionSheet
         isVisible={showActionSheet}

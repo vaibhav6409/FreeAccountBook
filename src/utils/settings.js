@@ -12,3 +12,9 @@ export const getCurrency = async () => {
 
   return res[0].rows.item(0);
 };
+
+export async function getAppSettings() {
+  const db = await getDB();
+  const res = await db.executeSql(`SELECT * FROM settings WHERE id=1`);
+  return res[0].rows.item(0);
+}

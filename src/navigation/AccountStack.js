@@ -6,6 +6,8 @@ import LedgerScreen from '../screens/LedgerScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import CurrencyChangeScreen from '../screens/CurrencyChangeScreen';
+import AmountLabelScreen from '../screens/AmountLabelScreen';
+import DateFormatScreen from '../screens/DateFormatScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +23,8 @@ export default function AccountStack() {
       <Stack.Screen name="Categories" component={CategoriesScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Currency" component={CurrencyChangeScreen} />
+      <Stack.Screen name="AmountLabels" component={AmountLabelScreen} />
+      <Stack.Screen name="DateFormat" component={DateFormatScreen} />
     </Stack.Navigator>
   );
 }

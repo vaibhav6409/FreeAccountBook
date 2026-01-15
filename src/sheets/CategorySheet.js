@@ -15,6 +15,8 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ICONS, COLORS } from '../constants/categoryOptions';
 import { getDB } from '../db/database';
 import { COLORS as THEME } from '../theme/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function CategorySheet({
   isVisible,
@@ -25,6 +27,7 @@ export default function CategorySheet({
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(ICONS[0]);
   const [color, setColor] = useState(COLORS[0]);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (editData) {
@@ -60,10 +63,17 @@ export default function CategorySheet({
   };
 
   return (
-    <Modal isVisible={isVisible} onBackdropPress={onClose} style={styles.modal}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}>
+    <Modal isVisible={isVisible} onBackdropPress={onClose} onBackButtonPress={onClose} style={styles.modal}>
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        extraScrollHeight={120}
+        keyboardOpeningTime={0}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingBottom: insets.bottom - 10,  // ✅ correct place
+        }}
+        showsVerticalScrollIndicator={false}
+      style={styles.container}>
     
         <View style={styles.handle} />
 
@@ -75,16 +85,13 @@ export default function CategorySheet({
             <Text style={styles.close}>✕</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        
         <TextInput
           placeholder="Category name"
           value={name}
           onChangeText={setName}
-          maxLength={30}
-          autoFocus
+          maxLength={25}
+          autoFocus={!editData}
           style={styles.input}
         />
        
@@ -98,8 +105,9 @@ export default function CategorySheet({
         <Text style={styles.label}>Icon</Text>
         <FlatList
           data={ICONS}
-          // numColumns={6}
-          horizontal
+          numColumns={6}
+          // horizontal
+          scrollEnabled={false}
           keyExtractor={i => i}
           renderItem={({ item }) => {
             const active = icon === item;
@@ -128,7 +136,6 @@ export default function CategorySheet({
             />
           ))}
         </View>
-         </ScrollView>
 
         <TouchableOpacity style={styles.saveBtn} onPress={save}>
           <Text style={styles.saveText}>
@@ -136,14 +143,15 @@ export default function CategorySheet({
           </Text>
         </TouchableOpacity>
        
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </Modal>
   );
 }
 const styles = StyleSheet.create({
-  modal: { justifyContent: 'flex-end', margin: 0 },
+  modal: {flex:1, justifyContent: 'flex-end', margin: 0 },
 
   container: {
+    maxHeight: '85%',
     backgroundColor: THEME.background,
     padding: 20,
     borderTopLeftRadius: 20,
@@ -238,6 +246,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     marginTop: 24,
+    marginBottom: 24,
     alignItems: 'center',
   },
 

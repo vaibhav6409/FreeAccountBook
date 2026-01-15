@@ -86,5 +86,25 @@ await database.executeSql(
    WHERE icon IS NULL OR color IS NULL`
 );
 
+// ---- SETTINGS MIGRATION ----
+try {
+  await database.executeSql(
+    `ALTER TABLE settings ADD COLUMN date_format TEXT DEFAULT 'DD/MM/YYYY'`
+  );
+} catch (e) {}
+
+try {
+  await database.executeSql(
+    `ALTER TABLE settings ADD COLUMN amount_labels TEXT DEFAULT 'IE'`
+  );
+} catch (e) {}
+
+await database.executeSql(`
+  INSERT OR IGNORE INTO settings (id, currency, date_format, amount_labels)
+  VALUES (1, 'INR', 'DD/MM/YYYY', 'IE')
+`);
+
+
+
 
 };
