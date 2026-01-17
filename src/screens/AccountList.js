@@ -16,6 +16,8 @@ import AddAccountSheet from '../sheets/AddAccountSheet';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
+import EmptyState from '../components/EmptyState';
+
 const HEADER_MAX_HEIGHT = 60;
 const HEADER_MIN_HEIGHT = 60;
 
@@ -71,6 +73,26 @@ export default function AccountList({ navigation }) {
   const filteredAccounts = accounts.filter(a =>
     a.name.toLowerCase().includes(searchText.toLowerCase()),
   );
+
+  useEffect(() => {
+    if (query.length >= 2) {
+      setSearchText(query);
+    } else {
+      setSearchText('');
+    }
+  }, [query]);
+
+  const sanitizeSearch = (value) => {
+    let cleaned = value.replace(/^\s+/, '');
+
+    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+    if (/^[^a-zA-Z0-9\s]+$/.test(cleaned)) {
+      return '';
+    }
+
+    return cleaned;
+  };
 
   const renderItem = ({ item }) => {
     const balance = item.income - item.expense;
@@ -161,20 +183,22 @@ export default function AccountList({ navigation }) {
           </View>
         )}
         {searchMode && (
-          <Animated.View style={{  }}>
+          <Animated.View style={{}}>
             <View style={styles.searchBox}>
               <Icon name="magnify" size={18} color="#888" />
               <TextInput
                 autoFocus
                 placeholder="Search..."
                 value={query}
-                onChangeText={t => {
-                  setQuery(t);
-                  setSearchText(t);
+                onChangeText={(t) => {
+                  const cleaned = sanitizeSearch(t);
+                  setQuery(cleaned);
+                  setSearchText(cleaned);
                 }}
                 maxLength={20}
                 style={styles.input}
               />
+
               <TouchableOpacity
                 onPress={() => {
                   setQuery('');
@@ -201,14 +225,25 @@ export default function AccountList({ navigation }) {
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Animated.Text
-            // entering={FadeInDown}
-            style={{ textAlign: 'center', marginTop: 60, color: '#999' }}
-          >
-            No accounts found
-          </Animated.Text>
+          accounts.length == 0 ? (
+            <EmptyState
+              icon="wallet-outline"
+              title="No accounts yet"
+              description="Create your first account to start tracking income and expenses."
+              buttonText="Create Account"
+              onPress={() => setShowAddSheet(true)}
+            />
+          ) : (
+            <EmptyState
+              icon="magnify"
+              title="No results found"
+              description="Try a different keyword."
+              showButton={false}
+            />
+          )
         }
       />
+      {accounts&&accounts.length != 0 &&
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
@@ -218,6 +253,8 @@ export default function AccountList({ navigation }) {
       >
         <Text style={styles.fabText}>＋</Text>
       </TouchableOpacity>
+      }
+      
       <AccountOptionsSheet
         isVisible={showOptions}
         account={selectedAccount}

@@ -32,11 +32,20 @@ export default function AnimatedHeader({
     extrapolate: 'clamp',
   });
 
+  const sanitizeTransactionSearch = (value) => {
+    if (!value) return '';
+    let cleaned = value.replace(/^\s+/, '');
+    cleaned = cleaned.replace(/\s{2,}/g, ' ');
+    if (/^[^a-zA-Z0-9.\s]+$/.test(cleaned)) {
+      return '';
+    }
+    return cleaned;
+  };
+
   return (
     <Animated.View
       style={[
         styles.container,
-        // scrollY && { height: headerHeight },
       ]}
     >
       <View style={styles.topRow}>
@@ -74,13 +83,15 @@ export default function AnimatedHeader({
             placeholder="Search..."
             placeholderTextColor={COLORS.textSecondary}
             value={query}
-            onChangeText={t => {
-              setQuery(t);
-              onSearch?.(t);
+            onChangeText={(t) => {
+              const cleaned = sanitizeTransactionSearch(t);
+              setQuery(cleaned);
+              onSearch?.(cleaned);
             }}
             maxLength={20}
             style={styles.input}
           />
+
 
           <TouchableOpacity
             onPress={() => {

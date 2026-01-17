@@ -9,7 +9,6 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AppHeader from '../components/AppHeader';
 import { useFocusEffect } from '@react-navigation/native';
-import { getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
 import { getAppSettings } from '../utils/settings';
 
@@ -62,6 +61,13 @@ export default function SettingsScreen({ navigation }) {
 
           <Divider />
 
+          <SettingItem
+            icon="file-chart-outline"
+            title="Reports"
+            onPress={() => navigation.navigate('Reports')}
+          />
+
+          <Divider />
 
           <SettingItem
             icon="shape-outline"

@@ -24,7 +24,9 @@ export default function AddTransactionSheet({
   settings
 }) {
   const [amount, setAmount] = useState('');
+  const [amountError, setAmountError] = useState('');
   const [note, setNote] = useState('');
+  const [noteError, setNoteError] = useState('');
   const [type, setType] = useState('CR');
   const [category, setCategory] = useState(null);
   const [dateOpen, setDateOpen] = useState(false);
@@ -50,8 +52,50 @@ export default function AddTransactionSheet({
     }
   }, [editData]);
 
+  const validateAmount = (value) => {
+    if (!value || value.trim() === '') {
+      return 'Amount is required';
+    }
+
+    const num = Number(value);
+
+    if (isNaN(num)) {
+      return 'Enter a valid number';
+    }
+
+    if (num <= 0) {
+      return 'Amount must be greater than 0';
+    }
+
+    return '';
+  };
+
+  const validateNote = (value) => {
+  if (!value) return '';
+
+  // Trim spaces
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return 'Note cannot be empty spaces';
+  }
+
+  // Only special characters
+  if (/^[^a-zA-Z0-9]+$/.test(trimmed)) {
+    return 'Note should contain letters or numbers';
+  }
+
+  return '';
+};
+
   const saveTransaction = async txType => {
-    if (!amount) return;
+    const amountErr = validateAmount(amount);
+    const noteErr = validateNote(note);
+
+    setAmountError(amountErr);
+    setNoteError(noteErr);
+
+    if (amountErr || noteErr) return;
 
     const db = await getDB();
 
@@ -104,20 +148,50 @@ export default function AddTransactionSheet({
           placeholder="Amount"
           placeholderTextColor={COLORS.textSecondary}
           value={amount}
-          onChangeText={setAmount}
-          keyboardType="numeric"
+          onChangeText={(val) => {
+            // allow only numbers & decimal
+            const cleaned = val.replace(/[^0-9.]/g, '');
+
+            // prevent multiple dots
+            if ((cleaned.match(/\./g) || []).length > 1) return;
+
+            setAmount(cleaned);
+            setAmountError(validateAmount(cleaned));
+          }}
+          keyboardType="decimal-pad"
           maxLength={12}
-          style={styles.amount}
+          style={[
+            styles.amount,
+            amountError && { borderColor: COLORS.expense },
+          ]}
         />
+        {amountError ? (
+          <Text style={styles.errorText}>{amountError}</Text>
+        ) : null}
 
         <TextInput
           placeholder="Notes (optional)"
           placeholderTextColor={COLORS.textSecondary}
           value={note}
-          onChangeText={setNote}
+          onChangeText={(val) => {
+            // prevent leading spaces
+            let cleaned = val.replace(/^\s+/, '');
+
+            // replace multiple spaces with single
+            cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+            setNote(cleaned);
+            setNoteError(validateNote(cleaned));
+          }}
           maxLength={35}
-          style={styles.note}
+          style={[
+            styles.note,
+            noteError && { borderColor: COLORS.expense },
+          ]}
         />
+        {noteError ? (
+          <Text style={styles.errorText}>{noteError}</Text>
+        ) : null}
 
         <View style={styles.categoryRow}>
           <TouchableOpacity
@@ -136,6 +210,7 @@ export default function AddTransactionSheet({
 
         <View style={styles.actionRow}>
           <TouchableOpacity
+            disabled={!!amountError}
             style={[styles.actionBtn, styles.income]}
             onPress={() => saveTransaction('CR')}
           >
@@ -143,6 +218,7 @@ export default function AddTransactionSheet({
           </TouchableOpacity>
 
           <TouchableOpacity
+            disabled={!!amountError}
             style={[styles.actionBtn, styles.expense]}
             onPress={() => saveTransaction('DR')}
           >
@@ -278,5 +354,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  errorText: {
+    marginTop: 6,
+    marginLeft: 4,
+    fontSize: 12,
+    color: COLORS.expense,
+    fontWeight: '500',
   },
 });

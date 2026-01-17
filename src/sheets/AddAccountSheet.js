@@ -18,14 +18,49 @@ export default function AddAccountSheet({
   onSaved,
 }) {
   const [name, setName] = useState('');
+  const [nameError, setNameError] = useState('');
 
   useEffect(() => {
     if (editData) setName(editData.name);
     else setName('');
   }, [editData]);
 
+  const validateName = async (value) => {
+  if (!value || value.trim().length === 0) {
+    return 'Account name is required';
+  }
+
+  const trimmed = value.trim();
+
+  // only special characters
+  if (/^[^a-zA-Z0-9]+$/.test(trimmed)) {
+    return 'Use letters or numbers';
+  }
+
+  const db = await getDB();
+
+  const [res] = await db.executeSql(
+    `SELECT id FROM accounts WHERE LOWER(name)=?`,
+    [trimmed.toLowerCase()]
+  );
+
+  if (
+    res.rows.length > 0 &&
+    (!editData || res.rows.item(0).id !== editData.id)
+  ) {
+    return 'Account name already exists';
+  }
+
+  return '';
+};
+
   const save = async () => {
     if (!name.trim()) return;
+
+    const error = await validateName(name);
+    setNameError(error);
+
+    if (error) return;
 
     const db = await getDB();
 
@@ -58,14 +93,34 @@ export default function AddAccountSheet({
 
         <TextInput
           value={name}
-          onChangeText={setName}
+          onChangeText={async (val) => {
+            // remove leading spaces
+            let cleaned = val.replace(/^\s+/, '');
+
+            // collapse multiple spaces
+            cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+            setName(cleaned);
+
+            if (cleaned.length > 0) {
+              setNameError(await validateName(cleaned));
+            } else {
+              setNameError('');
+            }
+          }}
           placeholder="Account name"
           placeholderTextColor={COLORS.textSecondary}
           maxLength={20}
-          style={styles.input}
+          style={[
+            styles.input,
+            nameError && { borderColor: COLORS.expense },
+          ]}
         />
+        {nameError ? (
+          <Text style={styles.errorText}>{nameError}</Text>
+        ) : null}
 
-        <TouchableOpacity style={styles.btn} onPress={save}>
+        <TouchableOpacity disabled={!!nameError} style={styles.btn} onPress={save}>
           <Text style={styles.btnText}>{editData ? 'Update' : 'Add'}</Text>
         </TouchableOpacity>
       </View>
@@ -121,4 +176,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+
+  errorText: {
+    color: COLORS.expense,
+    fontSize: 12,
+    marginBottom: 10,
+    marginLeft: 4,
+  },
+
 });

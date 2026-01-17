@@ -8,6 +8,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import CurrencyChangeScreen from '../screens/CurrencyChangeScreen';
 import AmountLabelScreen from '../screens/AmountLabelScreen';
 import DateFormatScreen from '../screens/DateFormatScreen';
+import ReportsScreen from '../screens/ReportsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export default function AccountStack() {
       <Stack.Screen name="Currency" component={CurrencyChangeScreen} />
       <Stack.Screen name="AmountLabels" component={AmountLabelScreen} />
       <Stack.Screen name="DateFormat" component={DateFormatScreen} />
+      <Stack.Screen name="Reports" component={ReportsScreen} />
     </Stack.Navigator>
   );
 }

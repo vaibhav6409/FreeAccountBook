@@ -1,13 +1,14 @@
+import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { initDB, getDB } from './src/db/database';
+import { initDB, getDB, migrateSettingsTable } from './src/db/database';
 import CurrencyScreen from './src/screens/CurrencyScreen';
 import AccountStack from './src/navigation/AccountStack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, StatusBar, View } from 'react-native';
-import { migrateSettingsTable } from './src/db/migrations';
 import { COLORS } from './src/theme/colors';
 import SplashScreen from './src/screens/SplashScreen';
 
@@ -63,6 +64,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <GestureHandlerRootView>
       <NavigationContainer>
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {!hasCurrency ? (
@@ -79,6 +81,7 @@ export default function App() {
           )}
         </RootStack.Navigator>
       </NavigationContainer>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }

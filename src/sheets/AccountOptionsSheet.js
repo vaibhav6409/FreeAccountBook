@@ -27,7 +27,7 @@ export default function AccountOptionsSheet({
   const deleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      `Are you sure you want to delete "${account.name}"?`,
+      `Deleting "${account.name}" will also delete all its transactions. Continue?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -35,9 +35,19 @@ export default function AccountOptionsSheet({
           style: 'destructive',
           onPress: async () => {
             const db = await getDB();
-            await db.executeSql('DELETE FROM accounts WHERE id=?', [
-              account.id,
-            ]);
+
+            // 🔥 delete related transactions first
+            await db.executeSql(
+              'DELETE FROM transactions WHERE account_id=?',
+              [account.id]
+            );
+
+            // 🔥 then delete account
+            await db.executeSql(
+              'DELETE FROM accounts WHERE id=?',
+              [account.id]
+            );
+
             onRefresh();
             onClose();
           },
@@ -45,6 +55,7 @@ export default function AccountOptionsSheet({
       ],
     );
   };
+
 
   return (
     <Modal isVisible={isVisible} onBackdropPress={onClose} onBackButtonPress={onClose} style={styles.modal}>

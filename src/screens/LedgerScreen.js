@@ -19,6 +19,7 @@ import { getAppSettings, getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
 import CategoryFilterSheet from '../sheets/CategoryFilterSheet';
 import dayjs from 'dayjs';
+import EmptyState from '../components/EmptyState';
 
 export default function LedgerScreen({ route, navigation }) {
   const { accountId, name } = route.params;
@@ -382,17 +383,39 @@ export default function LedgerScreen({ route, navigation }) {
           </Pressable>
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>No transactions yet</Text>
+          txns.length == 0 ? (
+            <EmptyState
+              icon="file-document-outline"
+              title="No transactions yet"
+              description="Start adding income or expense entries."
+              buttonText="Add Transaction"
+              onPress={() => {
+                setSelectedTxn(null);
+                setShowSheet(true);
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon="magnify"
+              title="No results found"
+              description="Try a different keyword."
+              showButton={false}
+            />
+          )
         }
       />
       <View style={styles.footer}>
         <View style={styles.footerItem}>
-          <Text style={styles.footerLabel}>{settings.amount_labels === 'CD' ? 'Credit' : 'Income'}</Text>
+          <Text style={styles.footerLabel}>
+            {settings.amount_labels === 'CD' ? 'Credit' : 'Income'}
+          </Text>
           <Text style={styles.footerValue}>{summary.income.toFixed(2)}</Text>
         </View>
 
         <View style={styles.footerItem}>
-          <Text style={styles.footerLabel}>{settings.amount_labels === 'CD' ? 'Debit' : 'Expense'}</Text>
+          <Text style={styles.footerLabel}>
+            {settings.amount_labels === 'CD' ? 'Debit' : 'Expense'}
+          </Text>
           <Text style={styles.footerValue}>{summary.expense.toFixed(2)}</Text>
         </View>
 
@@ -402,15 +425,17 @@ export default function LedgerScreen({ route, navigation }) {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => {
-          setSelectedTxn(null);
-          setShowSheet(true);
-        }}
-      >
-        <Text style={styles.fabText}>＋</Text>
-      </TouchableOpacity>
+      {txns && txns.length != 0 && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => {
+            setSelectedTxn(null);
+            setShowSheet(true);
+          }}
+        >
+          <Text style={styles.fabText}>＋</Text>
+        </TouchableOpacity>
+      )}
 
       <AddTransactionSheet
         isVisible={showSheet}

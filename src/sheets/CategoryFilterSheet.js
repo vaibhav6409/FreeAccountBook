@@ -51,6 +51,13 @@ export default function CategoryFilterSheet({
           keyExtractor={i => i.id.toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
+          ListEmptyComponent={
+            <Text
+              style={{ textAlign: 'center', marginVertical: 60, color: '#999' }}
+            >
+              No categories found
+            </Text>
+          }
           renderItem={({ item }) => {
             const active = selectedCategories.some(c => c.id === item.id);
 
@@ -84,12 +91,12 @@ export default function CategoryFilterSheet({
               onClose();
             }}
           >
-            <Text style={styles.clearText}>Clear</Text>
+            <Text style={styles.clearText}>{categories&&categories.length>0?"Clear":"Close"}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.applyBtn} onPress={onClose}>
+          {categories&&categories.length>0?(<TouchableOpacity style={styles.applyBtn} onPress={onClose}>
             <Text style={styles.applyText}>Apply</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>):null}
         </View>
       </View>
     </Modal>

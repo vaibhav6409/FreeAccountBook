@@ -16,6 +16,9 @@ export const COLORS = {
   /* STATUS */
   income: '#16A34A',
   expense: '#DC2626',
+  
+  incomeSoft: '#DCFCE7',
+  expenseSoft: '#FEE2E2',
 
   /* ICON */
   iconMuted: '#9CA3AF',

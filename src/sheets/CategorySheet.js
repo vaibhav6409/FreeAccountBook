@@ -25,6 +25,7 @@ export default function CategorySheet({
   editData = null,
 }) {
   const [name, setName] = useState('');
+  const [nameError, setNameError] = useState('');
   const [icon, setIcon] = useState(ICONS[0]);
   const [color, setColor] = useState(COLORS[0]);
   const insets = useSafeAreaInsets();
@@ -41,8 +42,40 @@ export default function CategorySheet({
     }
   }, [editData, isVisible]);
 
+  const validateCategoryName = async (value) => {
+  if (!value || value.trim().length === 0) {
+    return 'Category name is required';
+  }
+
+  const trimmed = value.trim();
+
+  // only special characters
+  if (/^[^a-zA-Z0-9]+$/.test(trimmed)) {
+    return 'Use letters or numbers';
+  }
+
+  const db = await getDB();
+
+  const [res] = await db.executeSql(
+    `SELECT id FROM categories WHERE LOWER(name)=?`,
+    [trimmed.toLowerCase()]
+  );
+
+  if (
+    res.rows.length > 0 &&
+    (!editData || res.rows.item(0).id !== editData.id)
+  ) {
+    return 'Category already exists';
+  }
+
+  return '';
+};
+
   const save = async () => {
     if (!name.trim()) return;
+    const error = await validateCategoryName(name);
+    setNameError(error);
+    if (error) return;
 
     const db = await getDB();
 
@@ -89,11 +122,31 @@ export default function CategorySheet({
         <TextInput
           placeholder="Category name"
           value={name}
-          onChangeText={setName}
+          onChangeText={async (val) => {
+            // remove leading spaces
+            let cleaned = val.replace(/^\s+/, '');
+
+            // collapse multiple spaces
+            cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+            setName(cleaned);
+
+            if (cleaned.length > 0) {
+              setNameError(await validateCategoryName(cleaned));
+            } else {
+              setNameError('');
+            }
+          }}
           maxLength={25}
           autoFocus={!editData}
-          style={styles.input}
+          style={[
+            styles.input,
+            nameError && { borderColor: THEME.expense },
+          ]}
         />
+        {nameError ? (
+          <Text style={styles.errorText}>{nameError}</Text>
+        ) : null}
        
         <View style={styles.preview}>
           <View style={[styles.previewIcon, { backgroundColor: color }]}>

@@ -12,6 +12,7 @@ import { getDB } from '../db/database';
 import CategorySheet from '../sheets/CategorySheet';
 import AppHeader from '../components/AppHeader';
 import { COLORS } from '../theme/colors';
+import EmptyState from '../components/EmptyState';
 
 export default function CategoriesScreen() {
   const [categories, setCategories] = useState([]);
@@ -83,9 +84,18 @@ export default function CategoriesScreen() {
             </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>No categories yet</Text>}
+        ListEmptyComponent={
+        <EmptyState
+          icon="shape-outline"
+          title="No categories"
+          description="Add categories to organize your transactions."
+          buttonText="Add Category"
+          onPress={() => {setEditCat(null);setShowSheet(true);}}
+        />
+      }
       />
 
+      {categories&&categories.length != 0 &&
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
@@ -94,7 +104,7 @@ export default function CategoriesScreen() {
         }}
       >
         <Text style={styles.fabText}>＋</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>}
 
       <CategorySheet
         isVisible={showSheet}
