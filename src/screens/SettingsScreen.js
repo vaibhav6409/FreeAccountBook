@@ -11,11 +11,15 @@ import AppHeader from '../components/AppHeader';
 import { useFocusEffect } from '@react-navigation/native';
 import { COLORS } from '../theme/colors';
 import { getAppSettings } from '../utils/settings';
+import DeviceInfo from 'react-native-device-info';
+import MyBannerAd from '../components/Ads/AdsComponents';
 
 export default function SettingsScreen({ navigation }) {
   const [currency, setCurrency] = useState('INR');
   const [dateFormat, setDateFormat] = useState('DD/MM/YYYY');
   const [amountLabels, setAmountLabels] = useState('IE');
+  const [appVersion, setAppVersion] = useState('');
+  const [buildNumber, setBuildNumber] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -24,7 +28,14 @@ export default function SettingsScreen({ navigation }) {
         setDateFormat(s.date_format);
         setAmountLabels(s.amount_labels);
       });
-    }, [])
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      setAppVersion(DeviceInfo.getVersion());
+      setBuildNumber(DeviceInfo.getBuildNumber());
+    }, []),
   );
 
   return (
@@ -53,9 +64,7 @@ export default function SettingsScreen({ navigation }) {
           <SettingItem
             icon="swap-vertical"
             title="Amount Labels"
-            value={amountLabels === 'IE'
-              ? 'Income / Expense'
-              : 'Credit / Debit'}
+            value={amountLabels === 'IE' ? 'Income / Expense' : 'Credit / Debit'}
             onPress={() => navigation.navigate('AmountLabels')}
           />
 
@@ -74,6 +83,34 @@ export default function SettingsScreen({ navigation }) {
             title="Categories"
             onPress={() => navigation.navigate('Categories')}
           />
+        </View>
+
+        <View style={{ alignItems: 'center', flex:1 }}>
+          <MyBannerAd />
+        </View>
+
+        <View style={[styles.card, { marginTop: 20 }]}>
+          <SettingItem
+            icon="shield-lock-outline"
+            title="Privacy Policy"
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          />
+
+          <Divider />
+
+          <SettingItem
+            icon="advertisements"
+            title="Ads Policy"
+            onPress={() => navigation.navigate('AdsPolicy')}
+          />
+        </View>
+        <View style={{ height: 30 }} />
+
+        <View style={styles.appInfo}>
+          <Text style={styles.appName}>Free Account Book</Text>
+          <Text style={styles.version}>
+            Version {appVersion || '1.0.0'} ({buildNumber || '1'})
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -156,5 +193,24 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.border,
     marginLeft: 64,
+  },
+
+  appInfo: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+
+  appName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    letterSpacing: 0.5,
+  },
+
+  version: {
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 4,
   },
 });

@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getCurrency } from '../utils/settings';
 import { COLORS } from '../theme/colors';
 import EmptyState from '../components/EmptyState';
+import MyBannerAd from '../components/Ads/AdsComponents';
 
 const HEADER_MAX_HEIGHT = 60;
 const HEADER_MIN_HEIGHT = 60;
@@ -243,6 +244,7 @@ export default function AccountList({ navigation }) {
           )
         }
       />
+
       {accounts&&accounts.length != 0 &&
       <TouchableOpacity
         style={styles.fab}
@@ -254,6 +256,10 @@ export default function AccountList({ navigation }) {
         <Text style={styles.fabText}>＋</Text>
       </TouchableOpacity>
       }
+
+      {/* <View style={{ alignItems: 'center', flex:1 }}>
+        <MyBannerAd />
+      </View> */}
       
       <AccountOptionsSheet
         isVisible={showOptions}
